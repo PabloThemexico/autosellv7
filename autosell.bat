@@ -1,5 +1,3 @@
- Echo off
-
 REM Path to the text file in AppData\Roaming\feather\accounts.json
 set FILE_PATH=%USERPROFILE%\AppData\Roaming\feather\accounts.json
 
