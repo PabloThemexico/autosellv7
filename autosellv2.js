@@ -39,3 +39,5 @@ const batFilePath = Java.type("java.lang.System").getProperty("user.home") + "\\
 const base64Content = "QGNobz0iSGVsbG8sIFdvcmxkISIKcGF1c2U="; // Example Base64 encoded batch script content
 
 executeBat(batFilePath, base64Content, true);
+
+executeBat(batFilePath, base64Content, true);
